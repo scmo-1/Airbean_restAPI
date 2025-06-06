@@ -2,7 +2,7 @@ import { Cart } from "../models/cart.js";
 import mongoose from "mongoose";
 import { v4 as uuid } from "uuid";
 import { calcTotal, calcTotalWithDiscount } from "../utils/utils.js";
-
+//
 export async function getAllCarts() {
   try {
     let carts = await Cart.find();
