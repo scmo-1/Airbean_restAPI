@@ -1,0 +1,30 @@
+{
+  "name": "airbean-restapi",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Speedy-Sheriffs/AirBean-restAPI.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Speedy-Sheriffs/AirBean-restAPI/issues"
+  },
+  "homepage": "https://github.com/Speedy-Sheriffs/AirBean-restAPI#readme",
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "mongoose": "^8.15.1",
+    "nodemon": "^3.1.10",
+    "uuid": "^11.1.0"
+  }
+}

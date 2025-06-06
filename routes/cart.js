@@ -1,0 +1,143 @@
+import { Router } from "express";
+import {
+  getAllCarts,
+  getCartById,
+  setCart,
+  updateCart,
+  getCartByUser,
+} from "../services/cart.js";
+import { v4 as uuid } from "uuid";
+import { getProductByProdId } from "../services/cart.js";
+import { calcTotal } from "../utils/utils.js";
+
+const router = Router();
+
+//GET all carts
+router.get("/", async (req, res, next) => {
+  const allCarts = await getAllCarts();
+  if (Array.isArray(allCarts)) {
+    res.status(200).json({
+      success: true,
+      message: `Cart(s) retrieved successfully. Number of carts: ${allCarts.length}`,
+      data: allCarts,
+    });
+  } else {
+    next({
+      status: 500,
+      message: "Failed to retrieve carts",
+    });
+  }
+});
+
+//GET cart by cartId
+router.get("/:cartId", async (req, res, next) => {
+  const { cartId } = req.params;
+
+  if (!cartId) {
+    next({
+      status: 400,
+      message: "Cart ID must be provided",
+    });
+  }
+
+  if (cartId) {
+    const cart = await getCartById(cartId);
+    if (cart) {
+      res.status(200).json({
+        success: true,
+        message: "Cart retrieved successfully",
+        data: cart,
+        total: `${calcTotal(cart.items)} SEK`,
+        discountedTotal: `${cart.total} SEK`,
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "No cart found",
+      });
+    }
+  }
+});
+
+//PUT update cart
+router.put("/", async (req, res, next) => {
+  const { prodId, qty, guestId } = req.body;
+  if (prodId === undefined || qty === undefined) {
+    next({
+      status: 400,
+      message: "Product ID and quantity must be provided",
+    });
+  }
+
+  const product = await getProductByProdId(prodId);
+  if (!product) {
+    next({
+      status: 404,
+      message: `Product with prodId "${prodId}" not found in menu`,
+    });
+  }
+
+  if (global.user) {
+    let cart = await getCartByUser(global.user.userId);
+    if (!cart) {
+      res.status(500).json({
+        success: false,
+        message: "Server error, cart not found",
+      });
+    } else {
+      const userCart = await updateCart(global.user.userId, {
+        prodId: product.prodId,
+        title: product.title,
+        price: product.price,
+        qty: qty,
+      });
+      res.status(200).json({
+        success: true,
+        message: `User: ${global.user.userId} cart updated`,
+        cart: userCart,
+        total: `${calcTotal(userCart.items)} SEK`,
+      });
+    }
+  } else {
+    if ("guestId" in req.body) {
+      let cart = await getCartByUser(guestId);
+      if (!cart) {
+        next({
+          status: 404,
+          message: "No cart found with provided guest ID",
+        });
+      } else {
+        const updatedGuestCart = await updateCart(guestId, {
+          prodId: product.prodId,
+          title: product.title,
+          price: product.price,
+          qty: qty,
+        });
+        res.status(200).json({
+          success: true,
+          message: `Guest: ${guestId} cart updated`,
+          cart: updatedGuestCart,
+          total: `${calcTotal(updatedGuestCart.items)} SEK`,
+        });
+      }
+    } else {
+      const newGuestId = `guest-${uuid().substring(0, 5)}`;
+      await setCart(newGuestId);
+      const newGuestCart = await updateCart(newGuestId, {
+        prodId: product.prodId,
+        title: product.title,
+        price: product.price,
+        qty: qty,
+      });
+      res.status(201).json({
+        success: true,
+        guestId: newGuestId,
+        message: "New guest cart created",
+        cart: newGuestCart,
+        total: `${calcTotal(newGuestCart.items)} SEK`,
+      });
+    }
+  }
+});
+
+export default router;
