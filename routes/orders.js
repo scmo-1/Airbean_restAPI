@@ -2,7 +2,7 @@ import { Router } from "express";
 import { calculateDeliveryTime } from "../services/orders.js";
 import Order from "../models/order.js";
 import { getAllOrders, getOrderByUserId } from "../services/orders.js";
-import { authorizeUser } from "../middlewares/authorizeUser.js";
+import { authenticateUser } from "../middlewares/authorizeUser.js";
 import { getCartById } from "../services/cart.js";
 import { calcTotal } from "../utils/utils.js";
 import { v4 as uuid } from "uuid";
@@ -27,7 +27,7 @@ router.get("/", async (req, res, next) => {
 });
 
 //GET orders by userID
-router.get("/:userId", authorizeUser, async (req, res, next) => {
+router.get("/:userId", async (req, res, next) => {
   const { userId } = req.params;
 
   try {

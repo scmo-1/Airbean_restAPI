@@ -8,23 +8,29 @@ import {
 } from "../services/cart.js";
 import { v4 as uuid } from "uuid";
 import { getProductByProdId } from "../services/cart.js";
-import { calcTotal } from "../utils/utils.js";
+import { calcTotal, verifyToken } from "../utils/utils.js";
+import { authenticateUser } from "../middlewares/authorizeUser.js";
+import { isAdmin, getUserFromRequest } from "../utils/utils.js";
+import { getUserById } from "../services/users.js";
 
 const router = Router();
 
-//GET all carts
-router.get("/", async (req, res, next) => {
-  const allCarts = await getAllCarts();
-  if (Array.isArray(allCarts)) {
-    res.status(200).json({
-      success: true,
-      message: `Cart(s) retrieved successfully. Number of carts: ${allCarts.length}`,
-      data: allCarts,
-    });
+router.get("/", authenticateUser, async (req, res, next) => {
+  const user = await isAdmin(req.user.userId);
+
+  if (user) {
+    const allCarts = await getAllCarts();
+    if (Array.isArray(allCarts)) {
+      res.status(200).json({
+        success: true,
+        message: `Cart(s) retrieved successfully. Number of carts: ${allCarts.length}`,
+        data: allCarts,
+      });
+    }
   } else {
     next({
-      status: 500,
-      message: "Failed to retrieve carts",
+      status: 401,
+      message: "Unauthorized",
     });
   }
 });
@@ -77,15 +83,17 @@ router.put("/", async (req, res, next) => {
     });
   }
 
-  if (global.user) {
-    let cart = await getCartByUser(global.user.userId);
+  const user = await getUserFromRequest(req);
+
+  if (user) {
+    let cart = await getCartByUser(user.userId);
     if (!cart) {
       res.status(500).json({
         success: false,
         message: "Server error, cart not found",
       });
     } else {
-      const userCart = await updateCart(global.user.userId, {
+      const userCart = await updateCart(user.userId, {
         prodId: product.prodId,
         title: product.title,
         price: product.price,
@@ -93,7 +101,7 @@ router.put("/", async (req, res, next) => {
       });
       res.status(200).json({
         success: true,
-        message: `User: ${global.user.userId} cart updated`,
+        message: `User: ${user.userId} cart updated`,
         cart: userCart,
         total: `${calcTotal(userCart.items)} SEK`,
       });

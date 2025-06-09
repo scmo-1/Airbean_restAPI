@@ -1,17 +1,22 @@
-export function authorizeUser(req, res, next) {
-    if (!global.user) {
-        return next({
-            status : 403,
-            message : 'You must log in!'
-        });
-    }
+import { verifyToken } from "../utils/utils.js";
 
-    if (req.params.userId && req.params.userId !== global.user.userId) {
-        return next({
-            status : 403,
-            message : 'You are not authorized to access this data'
-        });
+export function authenticateUser(req, res, next) {
+  if (req.headers.authorization) {
+    const token = req.headers.authorization.replace("Bearer ", "");
+    const decodedToken = verifyToken(token);
+    if (decodedToken) {
+      req.user = decodedToken;
+      next();
+    } else {
+      res.status(400).json({
+        success: false,
+        message: "Invalid token",
+      });
     }
-
-    next();
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "No token provided",
+    });
+  }
 }
