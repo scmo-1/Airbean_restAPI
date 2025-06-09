@@ -64,17 +64,6 @@ export function verifyToken(token) {
   }
 }
 
-export async function isAdmin(userId) {
-  try {
-    const user = await getUserById(userId);
-    if (!user) throw new Error("No user found");
-    return user.role === "admin";
-  } catch (error) {
-    console.error(error.message);
-    return false;
-  }
-}
-
 export async function getUserFromRequest(req) {
   if (req.headers.authorization) {
     const token = req.headers.authorization.replace("Bearer ", "");

@@ -9,28 +9,26 @@ import {
 import { v4 as uuid } from "uuid";
 import { getProductByProdId } from "../services/cart.js";
 import { calcTotal, verifyToken } from "../utils/utils.js";
-import { authenticateUser } from "../middlewares/authorizeUser.js";
-import { isAdmin, getUserFromRequest } from "../utils/utils.js";
-import { getUserById } from "../services/users.js";
+import {
+  authenticateUser,
+  authenticateAdmin,
+} from "../middlewares/authorizeUser.js";
+import { getUserFromRequest } from "../utils/utils.js";
 
 const router = Router();
 
-router.get("/", authenticateUser, async (req, res, next) => {
-  const user = await isAdmin(req.user.userId);
-
-  if (user) {
-    const allCarts = await getAllCarts();
-    if (Array.isArray(allCarts)) {
-      res.status(200).json({
-        success: true,
-        message: `Cart(s) retrieved successfully. Number of carts: ${allCarts.length}`,
-        data: allCarts,
-      });
-    }
+router.get("/", authenticateUser, authenticateAdmin, async (req, res, next) => {
+  const allCarts = await getAllCarts();
+  if (Array.isArray(allCarts)) {
+    res.status(200).json({
+      success: true,
+      message: `Cart(s) retrieved successfully. Number of carts: ${allCarts.length}`,
+      data: allCarts,
+    });
   } else {
     next({
-      status: 401,
-      message: "Unauthorized",
+      status: 500,
+      message: "Server error",
     });
   }
 });

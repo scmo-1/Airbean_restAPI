@@ -2,15 +2,19 @@ import { Router } from "express";
 import { calculateDeliveryTime } from "../services/orders.js";
 import Order from "../models/order.js";
 import { getAllOrders, getOrderByUserId } from "../services/orders.js";
-import { authenticateUser } from "../middlewares/authorizeUser.js";
+import {
+  authenticateUser,
+  authenticateAdmin,
+} from "../middlewares/authorizeUser.js";
 import { getCartById } from "../services/cart.js";
 import { calcTotal } from "../utils/utils.js";
 import { v4 as uuid } from "uuid";
+import { getUserFromRequest } from "../utils/utils.js";
 
 const router = Router();
 
 //GET all orders
-router.get("/", async (req, res, next) => {
+router.get("/", authenticateUser, authenticateAdmin, async (req, res, next) => {
   const orders = await getAllOrders();
   if (orders) {
     res.json({
@@ -67,13 +71,15 @@ router.post("/", async (req, res, next) => {
       });
     }
 
-    if (global.user) {
+    const user = await getUserFromRequest(req);
+
+    if (user) {
       const order = new Order({
         orderId: `order-${uuid().substring(0, 5)}`,
         items: cart.items,
         totalAmount: `${calcTotal(cart.items)} SEK`,
         discountedTotal: `${cart.total} SEK`,
-        user: global.user.userId,
+        user: user.userId,
       });
 
       await order.save();
@@ -81,7 +87,7 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({
         success: true,
         order,
-        message: `Order created for user: ${global.user.userId}`,
+        message: `Order created for user: ${user.userId}`,
         time: calculateDeliveryTime(),
       });
       cart.items = [];
