@@ -87,8 +87,3 @@ export async function updateCart(userId, product) {
     return null;
   }
 }
-
-export async function getProductByProdId(prodId) {
-  const collection = mongoose.connection.collection("menu");
-  return await collection.findOne({ prodId: prodId });
-}

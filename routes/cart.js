@@ -7,8 +7,8 @@ import {
   getCartByUser,
 } from "../services/cart.js";
 import { v4 as uuid } from "uuid";
-import { getProductByProdId } from "../services/cart.js";
-import { calcTotal, verifyToken } from "../utils/utils.js";
+import { getProductByProdId } from "../services/products.js";
+import { calcTotal } from "../utils/utils.js";
 import {
   authenticateUser,
   authenticateAdmin,

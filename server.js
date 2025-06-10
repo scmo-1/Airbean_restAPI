@@ -26,11 +26,10 @@ app.use("/api/orders", ordersRouter);
 
 database.on("error", (error) => console.log(error));
 database.once("connected", () => {
-  console.log("DB connected");
-  app.listen(PORT, //flyttet parentesen for å sikre at serveren starter først etter at databasen er koblet til. Krasjet ellers.
-    () => {
-      console.log(`Server is running on port ${PORT}`);
-    });
+  console.log(" ✅ DB connected");
+  app.listen(PORT, () => {
+    console.log(` 🚀 Server is running on port ${PORT}`);
+  });
 });
 
 app.use(errorHandler);
