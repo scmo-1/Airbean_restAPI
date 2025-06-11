@@ -56,6 +56,13 @@ router.post("/", async (req, res, next) => {
 
     const user = await getUserFromRequest(req);
 
+    if (user && cart.createdBy !== user.userId) {
+      next({
+        status: 401,
+        message: "Not authorized to place an order for this cart.",
+      });
+    }
+
     if (user) {
       const order = new Order({
         orderId: `order-${uuid().substring(0, 5)}`,
@@ -75,6 +82,13 @@ router.post("/", async (req, res, next) => {
       });
       removeCart(cartId);
     } else {
+      if (!cart.createdBy.includes("guest")) {
+        next({
+          status: 401,
+          message: "Not authorized to place an order for this cart.",
+        });
+      }
+
       const order = new Order({
         orderId: `order-${uuid().substring(0, 5)}`,
         items: cart.items,

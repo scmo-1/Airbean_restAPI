@@ -35,6 +35,8 @@ router.get("/", authenticateUser, authenticateAdmin, async (req, res, next) => {
 //GET cart by cartId
 router.get("/:cartId", async (req, res, next) => {
   const { cartId } = req.params;
+  const user = await getUserFromRequest(req);
+  const cart = await getCartById(cartId);
 
   if (!cartId) {
     next({
@@ -42,9 +44,28 @@ router.get("/:cartId", async (req, res, next) => {
       message: "Cart ID must be provided",
     });
   }
+  if (!cart) {
+    next({
+      status: 404,
+      message: "No cart found",
+    });
+  }
+
+  if (user && cart.createdBy !== user.userId) {
+    next({
+      status: 401,
+      message: "Not authorized to access this cart.",
+    });
+  }
+
+  if (!user && cart.createdBy.includes("user")) {
+    return next({
+      status: 401,
+      message: "Not authorized to access this cart.",
+    });
+  }
 
   if (cartId) {
-    const cart = await getCartById(cartId);
     if (cart) {
       res.status(200).json({
         success: true,
