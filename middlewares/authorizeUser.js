@@ -6,7 +6,7 @@ export function authenticateUser(req, res, next) {
   if (!auth) {
     return res.status(401).json({
       success: false,
-      message: "No token provided",
+      message: "Unauthorized",
     });
   }
   const token = auth.replace("Bearer ", "");
@@ -14,7 +14,7 @@ export function authenticateUser(req, res, next) {
   if (!decodedToken || !decodedToken.userId) {
     return res.status(401).json({
       success: false,
-      message: "Invalid token",
+      message: "Unauthorized",
     });
   }
   req.user = decodedToken;

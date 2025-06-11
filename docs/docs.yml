@@ -16,25 +16,6 @@ tags:
     description: Orders management
 
 paths:
-  /auth/logout:
-    get:
-      summary: Log out user
-      tags: [Auth]
-      responses:
-        "200":
-          description: User logged out successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: Logout successful
-
   /auth/register:
     post:
       summary: Register new user
@@ -149,7 +130,7 @@ paths:
                   qty: 3
       responses:
         "200":
-          description: User/guest cart updated // user/guest cart created
+          description: User/Guest cart updated
           content:
             application/json:
               schema:
@@ -160,7 +141,25 @@ paths:
                     example: true
                   message:
                     type: string
-                    example: User/Guest user-12345 cart updated // User/Guest user-12345 cart created
+                    example: User/Guest cart updated
+                  cart:
+                    $ref: "#/components/schemas/Cart"
+                  total:
+                    type: string
+                    example: "350 SEK"
+        "201":
+          description: User/Guest cart created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User/Guest cart created
                   cart:
                     $ref: "#/components/schemas/Cart"
                   total:
@@ -340,7 +339,7 @@ paths:
 
   /orders:
     get:
-      summary: Get all orders (Admin only)
+      summary: Get all orders (admin only) or order history for user
       tags: [Orders]
       security:
         - bearerAuth: []
@@ -355,13 +354,13 @@ paths:
                   success:
                     type: boolean
                     example: true
+                  message:
+                    type: string
+                    example: Orders fetched successfully. Number of orders 2
                   orders:
                     type: array
                     items:
                       $ref: "#/components/schemas/Order"
-                  message:
-                    type: string
-                    example: Orders fetched successfully. Number of orders 2
         "500":
           $ref: "#/components/responses/ServerError"
 
@@ -399,37 +398,6 @@ paths:
                     example: "20 minutes"
         "400":
           $ref: "#/components/responses/BadRequestError"
-        "404":
-          $ref: "#/components/responses/NotFoundError"
-        "500":
-          $ref: "#/components/responses/ServerError"
-
-  /orders/{userId}:
-    get:
-      summary: Get all orders for a specific user
-      tags: [Orders]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Unique user ID
-      responses:
-        "200":
-          description: Orders retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  orders:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Order"
         "404":
           $ref: "#/components/responses/NotFoundError"
         "500":

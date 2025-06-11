@@ -53,22 +53,16 @@ export async function getCartByUser(userId) {
   }
 }
 
-export async function setCart(id) {
+export async function createOrUpdateCart(id, product) {
   try {
-    const cart = await Cart.create({
-      cartId: `cart-${uuid().substring(0, 5)}`,
-      items: [],
-      createdBy: id,
-    });
-    return cart;
-  } catch (error) {
-    console.log(error.message);
-  }
-}
-
-export async function updateCart(userId, product) {
-  try {
-    const cart = await getCartByUser(userId);
+    let cart = await getCartByUser(id);
+    if (!cart) {
+      cart = await Cart.create({
+        cartId: `cart-${uuid().substring(0, 5)}`,
+        items: [],
+        createdBy: id,
+      });
+    }
     const item = cart.items.find((i) => i.prodId === product.prodId);
     if (item) {
       item.qty = product.qty;
@@ -81,6 +75,16 @@ export async function updateCart(userId, product) {
       cart.items = cart.items.filter((i) => i.prodId !== product.prodId);
     }
     await cart.save();
+    return cart;
+  } catch (error) {
+    console.log(error.message);
+    return null;
+  }
+}
+
+export async function removeCart(cartId) {
+  try {
+    const cart = await Cart.findOneAndDelete({ cartId: cartId });
     return cart;
   } catch (error) {
     console.log(error.message);

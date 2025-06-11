@@ -2,8 +2,7 @@ import { Router } from "express";
 import {
   getAllCarts,
   getCartById,
-  setCart,
-  updateCart,
+  createOrUpdateCart,
   getCartByUser,
 } from "../services/cart.js";
 import { v4 as uuid } from "uuid";
@@ -86,24 +85,45 @@ router.put("/", async (req, res, next) => {
   if (user) {
     let cart = await getCartByUser(user.userId);
     if (!cart) {
-      res.status(500).json({
-        success: false,
-        message: "Server error, cart not found",
-      });
-    } else {
-      const userCart = await updateCart(user.userId, {
+      const newCart = await createOrUpdateCart(user.userId, {
         prodId: product.prodId,
         title: product.title,
         price: product.price,
         qty: qty,
       });
-      res.status(200).json({
+
+      if (!newCart) {
+        return next({
+          status: 500,
+          message: "Server error. No cart created",
+        });
+      }
+
+      return res.status(201).json({
         success: true,
-        message: `User cart updated`,
-        cart: userCart,
-        total: `${calcTotal(userCart.items)} SEK`,
+        message: "New cart created",
+        cart: newCart,
+        total: `${calcTotal(newCart.items)} SEK`,
       });
     }
+    const updatedCart = await createOrUpdateCart(user.userId, {
+      prodId: product.prodId,
+      title: product.title,
+      price: product.price,
+      qty: qty,
+    });
+    if (!updatedCart) {
+      return next({
+        status: 500,
+        message: "Server error. No cart created",
+      });
+    }
+    return res.status(200).json({
+      success: true,
+      message: "Cart updated",
+      cart: updatedCart,
+      total: `${calcTotal(updatedCart.items)} SEK`,
+    });
   } else {
     if ("guestId" in req.body) {
       let cart = await getCartByUser(guestId);
@@ -113,7 +133,7 @@ router.put("/", async (req, res, next) => {
           message: "No cart found with provided guest ID",
         });
       } else {
-        const updatedGuestCart = await updateCart(guestId, {
+        const updatedGuestCart = await createOrUpdateCart(guestId, {
           prodId: product.prodId,
           title: product.title,
           price: product.price,
@@ -121,7 +141,7 @@ router.put("/", async (req, res, next) => {
         });
         res.status(200).json({
           success: true,
-          message: `Guestcart updated`,
+          message: `Cart updated`,
           guestId: guestId,
           cart: updatedGuestCart,
           total: `${calcTotal(updatedGuestCart.items)} SEK`,
@@ -129,8 +149,7 @@ router.put("/", async (req, res, next) => {
       }
     } else {
       const newGuestId = `guest-${uuid().substring(0, 5)}`;
-      await setCart(newGuestId);
-      const newGuestCart = await updateCart(newGuestId, {
+      const newGuestCart = await createOrUpdateCart(newGuestId, {
         prodId: product.prodId,
         title: product.title,
         price: product.price,
