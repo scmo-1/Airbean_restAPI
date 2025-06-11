@@ -5,7 +5,6 @@ import {
   authenticateAdmin,
 } from "../middlewares/authorizeUser.js";
 import {
-  getProductByProdId,
   createNewProduct,
   updateProduct,
   deleteProduct,

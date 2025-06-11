@@ -1,0 +1,657 @@
+openapi: 3.0.1
+info:
+  title: Café/Shop API
+  version: "1.0.0"
+  description: >
+    API for user authentication, authorization, and management of products, shopping carts, and orders.
+
+tags:
+  - name: Auth
+    description: User authentication and authorization
+  - name: Cart
+    description: Cart management
+  - name: Menu
+    description: Products and menu management
+  - name: Orders
+    description: Orders management
+
+paths:
+  /auth/logout:
+    get:
+      summary: Log out user
+      tags: [Auth]
+      responses:
+        "200":
+          description: User logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logout successful
+
+  /auth/register:
+    post:
+      summary: Register new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUser"
+      responses:
+        "201":
+          description: New user created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User created successfully
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+
+  /auth/login:
+    post:
+      summary: Log in user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginUser"
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Logged in successfully
+                  token:
+                    type: string
+                    example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6...
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /cart:
+    get:
+      summary: Get all carts (Admin only)
+      tags: [Cart]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All carts fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cart(s) retrieved successfully. Number of carts 2
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Cart"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    put:
+      summary: Update or create cart
+      tags: [Cart]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartRequest"
+            examples:
+              User:
+                summary: Logged in user
+                value:
+                  prodId: prod-xyz12
+                  qty: 2
+              GuestWithID:
+                summary: Guest with an existing guestId
+                value:
+                  prodId: prod-xyz12
+                  qty: 3
+                  guestId: guest-abc12
+              GuestWithoutID:
+                summary: A guest without an existing ID (new cart and guestId will be generated)
+                value:
+                  prodId: prod-xyz12
+                  qty: 3
+      responses:
+        "200":
+          description: User/guest cart updated // user/guest cart created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User/Guest user-12345 cart updated // User/Guest user-12345 cart created
+                  cart:
+                    $ref: "#/components/schemas/Cart"
+                  total:
+                    type: string
+                    example: "350 SEK"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /cart/{cartId}:
+    get:
+      summary: Get cart by cartId
+      tags: [Cart]
+      parameters:
+        - name: cartId
+          in: path
+          required: true
+          description: Unique cartId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Cart retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Cart retrieved successfully
+                  data:
+                    $ref: "#/components/schemas/Cart"
+                  total:
+                    type: string
+                    example: "400 SEK"
+                  discountedTotal:
+                    type: string
+                    example: "380 SEK"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+
+  /menu:
+    get:
+      summary: Get menu / all products
+      tags: [Menu]
+      responses:
+        "200":
+          description: List of all products in menu
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  menu:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Product"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    post:
+      summary: Add new product (Admin only)
+      tags: [Menu]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProduct"
+      responses:
+        "201":
+          description: New product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: New product created successfully
+                  product:
+                    $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /menu/{prodId}:
+    put:
+      summary: Update specific product (Admin only)
+      tags: [Menu]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prodId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique product ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProduct"
+      responses:
+        "200":
+          description: Product updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Product updated successfully
+                  product:
+                    $ref: "#/components/schemas/Product"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    delete:
+      summary: Remove prodcut from menu (Admin only)
+      tags: [Menu]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prodId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique product ID
+      responses:
+        "200":
+          description: Product deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Product prod-xyz12 deleted successfully
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /orders:
+    get:
+      summary: Get all orders (Admin only)
+      tags: [Orders]
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of all orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+                  message:
+                    type: string
+                    example: Orders fetched successfully. Number of orders 2
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+    post:
+      summary: Create order from cart
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cartId:
+                  type: string
+                  example: cart-abc12
+      responses:
+        "201":
+          description: Order created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  order:
+                    $ref: "#/components/schemas/Order"
+                  message:
+                    type: string
+                    example: Order created for user user-12345
+                  time:
+                    type: string
+                    example: "20 minutes"
+        "400":
+          $ref: "#/components/responses/BadRequestError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+  /orders/{userId}:
+    get:
+      summary: Get all orders for a specific user
+      tags: [Orders]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique user ID
+      responses:
+        "200":
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  orders:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/ServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    RegisterUser:
+      type: object
+      required:
+        - username
+        - password
+        - role
+      properties:
+        username:
+          type: string
+          minLength: 4
+          example: testuser
+        password:
+          type: string
+          minLength: 4
+          example: secret123
+        role:
+          type: string
+          example: user
+
+    LoginUser:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: testuser
+        password:
+          type: string
+          example: secret123
+
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        userId:
+          type: string
+        role:
+          type: string
+
+    CartItem:
+      type: object
+      properties:
+        prodId:
+          type: string
+          example: prod-xyz12
+        title:
+          type: string
+          example: Kaffe
+        price:
+          type: number
+          example: 50
+        qty:
+          type: integer
+          example: 2
+
+    Cart:
+      type: object
+      properties:
+        cartId:
+          type: string
+          example: cart-abc12
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        createdBy:
+          type: string
+          example: user-12345
+
+    UpdateCartRequest:
+      type: object
+      properties:
+        prodId:
+          type: string
+          example: prod-xyz12
+        qty:
+          type: integer
+          example: 3
+        guestId:
+          type: string
+          example: guest-abc12
+          description: Optional. Required only when updating an existing guest cart. If guestId is not provided, a new guest cart and guestId will be generated.
+    required:
+      - prodId
+      - qty
+
+    Product:
+      type: object
+      properties:
+        prodId:
+          type: string
+          example: prod-xyz12
+        title:
+          type: string
+          example: Kaffe
+        desc:
+          type: string
+          example: Färskbryggt kaffe från Colombia
+        price:
+          type: number
+          example: 40
+
+    NewProduct:
+      type: object
+      required:
+        - title
+        - price
+      properties:
+        title:
+          type: string
+          example: Kaffe
+        desc:
+          type: string
+          example: Bryggd på månadens bönor
+        price:
+          type: number
+          example: 40
+
+    UpdateProduct:
+      type: object
+      required:
+        - title
+        - price
+        - desc
+      properties:
+        title:
+          type: string
+          example: Kaffe
+        desc:
+          type: string
+          example: Bryggd på månadens bönor
+        price:
+          type: number
+          example: 40
+
+    Order:
+      type: object
+      properties:
+        orderId:
+          type: string
+          example: order-12345
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        totalAmount:
+          type: string
+          example: "400 SEK"
+        discountedTotal:
+          type: string
+          example: "380 SEK"
+        user:
+          type: string
+          example: user-12345
+
+    # Generella errors
+    BadRequestError:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 400
+        message:
+          type: string
+          example: Bad request. Please check your input.
+
+    NotFoundError:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Resource not found.
+
+    ServerError:
+      type: object
+      properties:
+        status:
+          type: integer
+          example: 500
+        message:
+          type: string
+          example: Server error.
+
+  responses:
+    BadRequestError:
+      description: Felaktig begäran
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BadRequestError"
+
+    NotFoundError:
+      description: Resurs hittades inte
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/NotFoundError"
+
+    ServerError:
+      description: Internt serverfel
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ServerError"

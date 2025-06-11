@@ -87,7 +87,7 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({
         success: true,
         order,
-        message: `Order created for user: ${user.userId}`,
+        message: `Order created successfully`,
         time: calculateDeliveryTime(),
       });
       cart.items = [];
@@ -105,7 +105,7 @@ router.post("/", async (req, res, next) => {
       res.status(201).json({
         success: true,
         order,
-        message: "Order created",
+        message: "Order created successfully",
         time: calculateDeliveryTime(),
       });
       cart.items = [];

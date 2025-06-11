@@ -7,6 +7,9 @@ import cartRouter from "./routes/cart.js";
 import menuRouter from "./routes/menu.js";
 import ordersRouter from "./routes/orders.js";
 import errorHandler from "./middlewares/errorHandler.js";
+import swaggerUI from "swagger-ui-express";
+import { parse } from "yaml";
+import fs from "fs";
 
 //config
 dotenv.config();
@@ -15,10 +18,14 @@ const PORT = process.env.PORT;
 mongoose.connect(process.env.CONNECTION_STRING);
 const database = mongoose.connection;
 
+const file = fs.readFileSync("./docs/docs.yml", "utf8");
+const swaggerDocs = parse(file);
+
 //middlewares
 app.use(express.json());
 
 //routes
+app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 app.use("/api/auth", authRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/menu", menuRouter);

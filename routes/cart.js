@@ -77,7 +77,7 @@ router.put("/", async (req, res, next) => {
   if (!product) {
     next({
       status: 404,
-      message: `Product with prodId "${prodId}" not found in menu`,
+      message: `Product with ID: "${prodId}" not found in menu`,
     });
   }
 
@@ -99,7 +99,7 @@ router.put("/", async (req, res, next) => {
       });
       res.status(200).json({
         success: true,
-        message: `User: ${user.userId} cart updated`,
+        message: `User cart updated`,
         cart: userCart,
         total: `${calcTotal(userCart.items)} SEK`,
       });
@@ -121,7 +121,8 @@ router.put("/", async (req, res, next) => {
         });
         res.status(200).json({
           success: true,
-          message: `Guest: ${guestId} cart updated`,
+          message: `Guestcart updated`,
+          guestId: guestId,
           cart: updatedGuestCart,
           total: `${calcTotal(updatedGuestCart.items)} SEK`,
         });
