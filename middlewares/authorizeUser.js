@@ -1,17 +1,48 @@
-export function authorizeUser(req, res, next) {
-    if (!global.user) {
-        return next({
-            status : 403,
-            message : 'You must log in!'
-        });
-    }
+import { verifyToken } from "../utils/utils.js";
+import { getUserById } from "../services/users.js";
 
-    if (req.params.userId && req.params.userId !== global.user.userId) {
-        return next({
-            status : 403,
-            message : 'You are not authorized to access this data'
-        });
-    }
+export function authenticateUser(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+  const token = auth.replace("Bearer ", "");
+  const decodedToken = verifyToken(token);
+  if (!decodedToken || !decodedToken.userId) {
+    return res.status(401).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+  req.user = decodedToken;
+  next();
+}
 
-    next();
+export async function authenticateAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Not authenticated",
+    });
+  }
+  const user = await getUserById(req.user.userId);
+
+  if (!user) {
+    return res.status(401).json({
+      success: false,
+      message: "User not found",
+    });
+  }
+
+  if (user.role !== "admin") {
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized",
+    });
+  }
+
+  next();
 }

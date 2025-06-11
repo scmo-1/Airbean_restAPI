@@ -1,3 +1,7 @@
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { getUserById } from "../services/users.js";
+
 export function calcTotal(items) {
   return items.reduce((sum, item) => sum + item.price * item.qty, 0);
 }
@@ -31,4 +35,45 @@ export function calcTotalWithDiscount(items) {
     discount,
     total,
   };
+}
+
+export async function hashPassword(password) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  return hashedPassword;
+}
+
+export async function comparePasswords(password, hashedPassword) {
+  const isSame = await bcrypt.compare(password, hashedPassword);
+  return isSame;
+}
+
+export function signToken(payload) {
+  const token = jwt.sign(payload, process.env.ENCRYPTION, {
+    expiresIn: 60 * 60,
+  });
+  return token;
+}
+
+export function verifyToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.ENCRYPTION);
+    return decoded;
+  } catch (error) {
+    console.log(error.message);
+    return null;
+  }
+}
+
+export async function getUserFromRequest(req) {
+  if (req.headers.authorization) {
+    const token = req.headers.authorization.replace("Bearer ", "");
+    const decodedToken = verifyToken(token);
+    const user = await getUserById(decodedToken.userId);
+
+    if (user) {
+      return user;
+    } else {
+      return undefined;
+    }
+  }
 }

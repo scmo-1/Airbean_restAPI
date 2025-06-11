@@ -6,13 +6,13 @@ const userSchema = new Schema({
   username: {
     type: String,
     unique: true,
-    minlength: 6,
+    minlength: 4,
     required: true,
   },
   password: {
     type: String,
     required: true,
-    minlength: 8,
+    minlength: 4,
   },
   userId: {
     type: String,
@@ -23,7 +23,6 @@ const userSchema = new Schema({
     type: String,
     required: true,
     lowercase: true,
-    default: "user",
   },
 });
 
